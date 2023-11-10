@@ -1,0 +1,6 @@
+lightning_logs
+data
+__pycache__
+env
+**/*.model
+**/*.vocab
