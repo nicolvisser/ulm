@@ -354,7 +354,7 @@ class GPT(nn.Module):
         return idx
 
     @torch.no_grad()
-    def generate_top_p(self, idx, max_new_tokens, top_p=0.9):
+    def generate_top_p(self, idx, max_new_tokens, top_p=0.8):
         """
         Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
         the sequence max_new_tokens times, feeding the predictions back into the model each time.

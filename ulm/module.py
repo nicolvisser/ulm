@@ -63,12 +63,11 @@ class CustomScheduler(optim.lr_scheduler._LRScheduler):
 
 
 class LitGPT(pl.LightningModule):
-    def __init__(self, config: GPTConfig, learning_rate: float, n_steps_per_epoch: int):
+    def __init__(self, gpt_config: GPTConfig):
         super().__init__()
 
-        self.model = GPT(config)
-        self.learning_rate = learning_rate
-        self.n_steps_per_epoch = n_steps_per_epoch
+        self.model = GPT(gpt_config)
+        self.learning_rate = 5e-4  # max learning rate
 
     def forward(self, idx, targets=None):
         return self.model(idx, targets=targets)
@@ -98,9 +97,9 @@ class LitGPT(pl.LightningModule):
         sched_config = {
             "scheduler": CustomScheduler(
                 optimizer,
-                n_linear_steps=self.n_steps_per_epoch,  # 1 epoch
-                n_decay_steps=self.n_steps_per_epoch * 10,  # 10 epochs
-                lr_init=0,
+                n_linear_steps=1000,
+                n_decay_steps=99000,
+                lr_init=0.0,
                 lr_max=self.learning_rate,
                 lr_final=self.learning_rate / 10,
             ),
@@ -115,5 +114,5 @@ class LitGPT(pl.LightningModule):
             idx, max_new_tokens, temperature=temperature, top_k=top_k
         )
 
-    def generate_top_p(self, idx, max_new_tokens, top_p=0.9):
+    def generate_top_p(self, idx, max_new_tokens, top_p=0.8):
         return self.model.generate_top_p(idx, max_new_tokens, top_p=top_p)
