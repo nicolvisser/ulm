@@ -3,6 +3,7 @@ torchvision
 torchaudio
 lightning
 tqdm
-tensorboard
-tensorboardX
 click
+sentencepiece
+wandb
+soundfile

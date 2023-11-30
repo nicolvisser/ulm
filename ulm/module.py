@@ -1,14 +1,13 @@
-import select
-from typing import Self
 import lightning.pytorch as pl
 
 from .nano_gpt import GPT, GPTConfig
 
 
 class LitGPT(pl.LightningModule):
-    def __init__(self, config: GPTConfig):
+    def __init__(self, config: GPTConfig, learning_rate: float):
         super().__init__()
 
+        self.learning_rate = learning_rate
         self.model = GPT(config)
 
     def forward(self, idx, targets=None):
@@ -30,8 +29,8 @@ class LitGPT(pl.LightningModule):
 
     def configure_optimizers(self):
         return self.model.configure_optimizers(
-            weight_decay=0.01,
-            learning_rate=1e-3,
+            weight_decay=1e-1,
+            learning_rate=self.learning_rate,
             betas=(0.9, 0.999),
             device_type="cuda",
         )
@@ -40,3 +39,6 @@ class LitGPT(pl.LightningModule):
         return self.model.generate(
             idx, max_new_tokens, temperature=temperature, top_k=top_k
         )
+
+    def generate_top_p(self, idx, max_new_tokens, top_p=0.9):
+        return self.model.generate_top_p(idx, max_new_tokens, top_p=top_p)

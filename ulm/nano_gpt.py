@@ -30,6 +30,34 @@ class LayerNorm(nn.Module):
         return F.layer_norm(input, self.weight.shape, self.weight, self.bias, 1e-5)
 
 
+def top_p_sampling(logits, p=0.9):
+    """
+    Apply top-p (nucleus) sampling to the given logits.
+
+    :param logits: Logits to sample from, typically the output of a language model.
+    :param p: Cumulative probability threshold for top-p sampling.
+    :return: Index of the sampled token.
+    """
+    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+    # Remove tokens with cumulative probability above the threshold
+    sorted_indices_to_remove = cumulative_probs > p
+    # Shift the indices to the right to keep the first token above the threshold
+    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+    sorted_indices_to_remove[..., 0] = 0
+
+    indices_to_remove = sorted_indices_to_remove.scatter(
+        1, sorted_indices, sorted_indices_to_remove
+    )
+    logits[indices_to_remove] = float(
+        "-inf"
+    )  # Set logits of unwanted tokens to negative infinity
+
+    probabilities = F.softmax(logits, dim=-1)
+    return torch.multinomial(probabilities, 1).item()
+
+
 class CausalSelfAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -321,6 +349,39 @@ class GPT(nn.Module):
             # sample from the distribution
             idx_next = torch.multinomial(probs, num_samples=1)
             # append sampled index to the running sequence and continue
+            idx = torch.cat((idx, idx_next), dim=1)
+
+        return idx
+
+    @torch.no_grad()
+    def generate_top_p(self, idx, max_new_tokens, top_p=0.9):
+        """
+        Take a conditioning sequence of indices idx (LongTensor of shape (b,t)) and complete
+        the sequence max_new_tokens times, feeding the predictions back into the model each time.
+        Most likely you'll want to make sure to be in model.eval() mode of operation for this.
+        """
+        for _ in range(max_new_tokens):
+            idx_cond = (
+                idx
+                if idx.size(1) <= self.config.block_size
+                else idx[:, -self.config.block_size :]
+            )
+            logits, _ = self(idx_cond)
+            sorted_logits, sorted_indices = torch.sort(logits, descending=True, dim=-1)
+            cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+            # Remove tokens with cumulative probability above the threshold
+            sorted_indices_to_remove = cumulative_probs > top_p
+            # In case the first token is already above the threshold:
+            sorted_indices_to_remove[..., 0] = 0
+            indices_to_remove = sorted_indices_to_remove.scatter(
+                2, sorted_indices, sorted_indices_to_remove
+            )
+            logits[indices_to_remove] = float(
+                "-inf"
+            )  # Set logits of unwanted tokens to negative infinity
+
+            probabilities = F.softmax(logits, dim=-1)
+            idx_next = torch.multinomial(probabilities[:, 0, :], 1)
             idx = torch.cat((idx, idx_next), dim=1)
 
         return idx

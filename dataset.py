@@ -27,20 +27,3 @@ class TokenizedDataset(Dataset):
         random_start = random.randint(0, len(self.ids) - self.block_size)
         sequence = self.ids[random_start : random_start + self.block_size]
         return sequence
-
-
-if __name__ == "__main__":
-    dataset = TokenizedDataset(
-        path_to_ids="/home/nicolvisser/workspace/ulm/data/train.pt",
-        block_size=10,
-        num_samples=100,
-    )
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_size=2,
-        shuffle=False,
-        num_workers=0,
-    )
-    for batch in dataloader:
-        print(batch)
-        break

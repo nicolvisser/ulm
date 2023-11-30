@@ -1,12 +1,11 @@
 import json
-from pathlib import Path
-from attr import asdict
 
 import click
 import lightning.pytorch as pl
-from lightning.pytorch import loggers as pl_loggers
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
+import torch
 
 from dataset import TokenizedDataset
 from ulm.module import GPTConfig, LitGPT
@@ -44,6 +43,12 @@ from ulm.module import GPTConfig, LitGPT
     help="Batch size",
 )
 @click.option(
+    "--learning_rate",
+    type=float,
+    default=5e-4,
+    help="Learning rate",
+)
+@click.option(
     "--num_workers",
     type=int,
     default=8,
@@ -73,6 +78,7 @@ def train(
     val_ids_path,
     version_name,
     batch_size,
+    learning_rate,
     num_workers,
     max_steps,
     train_num_samples,
@@ -109,27 +115,45 @@ def train(
         drop_last=True,
     )
 
-    model = LitGPT(config)
+    torch.set_float32_matmul_precision("medium")
 
-    tensorboard = pl_loggers.TensorBoardLogger(save_dir="", version=version_name)
+    model = LitGPT(config, learning_rate=learning_rate)
 
-    log_dir = Path(tensorboard.log_dir)
+    logger = WandbLogger(
+        project="ulm-nano-gpt",
+        name=version_name,
+        save_dir="./",
+    )
 
-    if log_dir.exists():
-        raise ValueError(
-            f"A log with version name, {version_name}, already exists in {tensorboard.log_dir}. Please choose another version name or delete the existing version."
-        )
+    best_checkpoint_callback = ModelCheckpoint(
+        monitor="val_loss",
+        mode="min",
+        save_top_k=1,
+        save_last=False,
+        save_weights_only=True,
+        verbose=True,
+    )
 
-    checkpoint_callback = ModelCheckpoint(
-        save_top_k=3, save_last=True, monitor="val_loss"
+    last_checkpoint_callback = ModelCheckpoint(
+        save_last=True,
+        save_weights_only=False,
+    )
+
+    logger.log_hyperparams(
+        {
+            **config.__dict__,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+        }
     )
 
     trainer = pl.Trainer(
         accelerator="gpu",
-        logger=tensorboard,
+        precision="16-mixed",
+        logger=logger,
         max_steps=max_steps,
         log_every_n_steps=1,
-        callbacks=[checkpoint_callback],
+        callbacks=[best_checkpoint_callback, last_checkpoint_callback],
     )
 
     trainer.fit(
