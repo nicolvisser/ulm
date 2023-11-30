@@ -7,3 +7,4 @@ env
 output
 tmp/
 wandb
+ulm-nano-gpt/

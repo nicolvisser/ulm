@@ -3,7 +3,7 @@ import json
 import click
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
 from torch.utils.data import DataLoader
 import torch
 
@@ -116,8 +116,13 @@ def train(
     )
 
     torch.set_float32_matmul_precision("medium")
+    n_steps_per_epoch = len(train_dataset) // batch_size
 
-    model = LitGPT(config, learning_rate=learning_rate)
+    model = LitGPT(
+        config,
+        learning_rate=learning_rate,
+        n_steps_per_epoch=n_steps_per_epoch,
+    )
 
     logger = WandbLogger(
         project="ulm-nano-gpt",
@@ -139,6 +144,8 @@ def train(
         save_weights_only=False,
     )
 
+    lr_monitor_callback = LearningRateMonitor(logging_interval="step")
+
     logger.log_hyperparams(
         {
             **config.__dict__,
@@ -153,7 +160,11 @@ def train(
         logger=logger,
         max_steps=max_steps,
         log_every_n_steps=1,
-        callbacks=[best_checkpoint_callback, last_checkpoint_callback],
+        callbacks=[
+            best_checkpoint_callback,
+            last_checkpoint_callback,
+            lr_monitor_callback,
+        ],
     )
 
     trainer.fit(

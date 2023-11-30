@@ -66,6 +66,6 @@ val = torch.tensor(sp.EncodeAsIds(val_text), dtype=torch.long)
 print("Done!")
 
 torch.save(train, output_dir / "train.pt")
-torch.save(val, output_dir / "val.pt")
+torch.save(val, output_dir / "dev.pt")
 
 print(f"Saved train.pt and val.pt to {output_dir}")
