@@ -101,8 +101,8 @@ class LitGPT(pl.LightningModule):
                 n_linear_steps=self.n_steps_per_epoch,  # 1 epoch
                 n_decay_steps=self.n_steps_per_epoch * 10,  # 10 epochs
                 lr_init=0,
-                lr_max=1e-5,
-                lr_final=1e-6,
+                lr_max=self.learning_rate,
+                lr_final=self.learning_rate / 10,
             ),
             "frequency": 1,
             "interval": "step",

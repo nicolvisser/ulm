@@ -39,31 +39,26 @@ from ulm.module import GPTConfig, LitGPT
 @click.option(
     "--batch_size",
     type=int,
-    default=32,
     help="Batch size",
 )
 @click.option(
     "--learning_rate",
     type=float,
-    default=5e-4,
-    help="Learning rate",
+    help="Max learning rate. Final learning rate is 10x lower.",
 )
 @click.option(
     "--num_workers",
     type=int,
-    default=8,
     help="Number of workers",
 )
 @click.option(
     "--max_steps",
     type=int,
-    default=100000,
-    help="Number of epochs",
+    help="Max number of steps before training stops",
 )
 @click.option(
     "--train_num_samples",
     type=int,
-    default=10000,
     help="Number of samples in training dataset per epoch",
 )
 @click.option(
@@ -71,6 +66,18 @@ from ulm.module import GPTConfig, LitGPT
     type=int,
     default=1000,
     help="Number of samples in validation dataset",
+)
+@click.option(
+    "--val_check_interval",
+    type=float,
+    default=1.0,
+    help="Interval (in epochs) to check validation dataset",
+)
+@click.option(
+    "--log_every_n_steps",
+    type=int,
+    default=1,
+    help="Interval (in steps) to log training metrics",
 )
 def train(
     config_path,
@@ -83,6 +90,8 @@ def train(
     max_steps,
     train_num_samples,
     val_num_samples,
+    val_check_interval,
+    log_every_n_steps,
 ):
     with open(config_path, "r") as f:
         config = GPTConfig(**json.load(f))
@@ -159,7 +168,8 @@ def train(
         precision="16-mixed",
         logger=logger,
         max_steps=max_steps,
-        log_every_n_steps=1,
+        log_every_n_steps=log_every_n_steps,
+        val_check_interval=val_check_interval,
         callbacks=[
             best_checkpoint_callback,
             last_checkpoint_callback,
