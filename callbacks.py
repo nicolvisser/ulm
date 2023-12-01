@@ -1,5 +1,4 @@
 from lightning.pytorch.callbacks import Callback
-from matplotlib.pyplot import step
 
 import torch
 import torchaudio
