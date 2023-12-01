@@ -25,6 +25,6 @@ for n_units in [500]:
             command.append("--val_check_interval")
             command.append("0.5")
             command.append("--log_every_n_steps")
-            command.append("50")
+            command.append("1")
 
             os.system(" ".join(command))
