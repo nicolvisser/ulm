@@ -62,5 +62,4 @@ class LogSampleContinuationCallback(Callback):
                     caption="Sample Continuation",
                 ),
             },
-            step=trainer.global_step,
         )
