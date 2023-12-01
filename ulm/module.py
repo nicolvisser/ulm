@@ -98,7 +98,7 @@ class LitGPT(pl.LightningModule):
             "scheduler": CustomScheduler(
                 optimizer,
                 n_linear_steps=1000,
-                n_decay_steps=99000,
+                n_decay_steps=10000,
                 lr_init=0.0,
                 lr_max=self.learning_rate,
                 lr_final=self.learning_rate / 10,

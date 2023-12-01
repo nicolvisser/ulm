@@ -94,7 +94,7 @@ def train(
             block_size=config.block_size,
             num_samples=50000,
         ),
-        batch_size=50,
+        batch_size=40,
         num_workers=num_workers,
         pin_memory=True,
         drop_last=True,
@@ -106,7 +106,7 @@ def train(
             block_size=config.block_size,
             num_samples=100,
         ),
-        batch_size=50,
+        batch_size=40,
         num_workers=num_workers,
         pin_memory=True,
         drop_last=True,
@@ -151,7 +151,7 @@ def train(
         accelerator="gpu",
         precision="16-mixed",
         logger=logger,
-        max_steps=100000,
+        max_steps=10000,
         log_every_n_steps=log_every_n_steps,
         val_check_interval=val_check_interval,
         callbacks=[
@@ -160,6 +160,7 @@ def train(
             lr_monitor_callback,
             sample_continuation_callback,
         ],
+        fast_dev_run=False,
     )
 
     trainer.fit(
