@@ -123,7 +123,7 @@ def train(
     )
 
     best_checkpoint_callback = ModelCheckpoint(
-        monitor="val_loss",
+        monitor="val/loss",
         mode="min",
         save_top_k=1,
         save_last=False,

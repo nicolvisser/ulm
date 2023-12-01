@@ -76,14 +76,14 @@ class LitGPT(pl.LightningModule):
         tokens = batch
         src, tgt = tokens[:, :-1].contiguous(), tokens[:, 1:].contiguous()
         logits, loss = self(src, tgt)
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train/loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         tokens = batch
         src, tgt = tokens[:, :-1].contiguous(), tokens[:, 1:].contiguous()
         logits, loss = self(src, tgt)
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val/loss", loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self):

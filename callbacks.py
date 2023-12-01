@@ -1,4 +1,5 @@
 from lightning.pytorch.callbacks import Callback
+from matplotlib.pyplot import step
 
 import torch
 import torchaudio
@@ -61,5 +62,6 @@ class LogSampleContinuationCallback(Callback):
                     sample_rate=sr_,
                     caption="Sample Continuation",
                 ),
-            }
+            },
+            step=trainer.global_step,
         )
